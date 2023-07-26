@@ -20,7 +20,7 @@ function updateFile(data) {
     const ws = XLSX.utils.json_to_sheet(data)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Accounts')
-    XLSX.writeFile(wb, 'file/xlfile2.xlsx')
+    XLSX.writeFile(wb, './file/xlfile.xlsx')
 
 }
 
@@ -38,11 +38,15 @@ const updateBalanceInFile = async () => {
         const publickey = Data[i].publickey;
         let tokenTotalBalance = await TOKEN_CONTRACT.balanceOf(publickey);
         let symbol = await TOKEN_CONTRACT.symbol();
-        tokenTotalBalance = String(weiToEth(tokenTotalBalance))
+        tokenTotalBalance = Number(weiToEth(tokenTotalBalance))
         Data[i][symbol] = tokenTotalBalance;
+        
+        let ethBalance = await provider.getBalance(publickey);
+        Data[i]["ETH"] = weiToEth(String(ethBalance));
+
     }
     console.log(Data);
-    // updateFile(Data);
+    updateFile(Data);
 };
 
 
