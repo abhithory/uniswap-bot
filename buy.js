@@ -10,11 +10,6 @@ const argv = yargs
     describe: 'Specify a group',
     type: 'string'
   })
-  .option('p', {
-    alias: 'percent',
-    describe: 'Specify a percentage',
-    type: 'number'
-  })
   .argv;
 const { RPC_URL, UNISWAP_ROUTER_ADDRESS, TOKEN_ADDRESS, TOKEN_DECIMALS } = require("./src/config");
 
