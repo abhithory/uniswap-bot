@@ -108,7 +108,7 @@ const init = async () => {
 
     if (allowedGroups.includes(groupVaule)) {
       console.log("Group: ",groupVaule);
-      await swapTokens(privateKey, Token1, WETH[Token1.chainId], tokenAmount, "50") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
+      await swapTokens(privateKey, Token1, WETH[Token1.chainId], tokenAmount, "100") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
       let _increageTime = randomInteger();
       console.log(`Wait for ${_increageTime} mili Sec`);
       await timer(_increageTime);
