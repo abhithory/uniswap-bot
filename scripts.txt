@@ -1,0 +1,6 @@
+node buy.js --group abcd
+
+node sell.js --group a  --percent 30
+
+
+node updatedata.js

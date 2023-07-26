@@ -134,7 +134,7 @@ const init = async () => {
             console.log("Total Balance: ", tokenTotalBalance);
             const tokenBalanceToSell = tokenTotalBalance * percentToSell/100;      
 
-            sellTokens(privateKey, WETH[TokenToSell.chainId], TokenToSell, tokenBalanceToSell, "50") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
+            await sellTokens(privateKey, WETH[TokenToSell.chainId], TokenToSell, tokenBalanceToSell, "100") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
             //   let _increageTime = randomInteger();
             //   console.log(`Wait for ${_increageTime} mili Sec`);
             //   await timer(_increageTime);

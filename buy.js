@@ -52,9 +52,12 @@ async function swapTokens(privateKey, token1, token2, amount, slippage) {
     const value = trade.inputAmount.raw;
     const valueHex = await ethers.BigNumber.from(value.toString()).toHexString();
 
+
     const deadline = Math.floor(Date.now() / 1000) + 60; // 60 secs from the current Unix time
     const rawTxn = await UNISWAP_ROUTER_CONTRACT.populateTransaction.swapExactETHForTokens(amountOutMinHex, path, to, deadline, {
-      value: valueHex
+      value: valueHex,
+      gasPrice: ethers.utils.parseUnits("50", 'gwei'),
+      // gasLimit: 200000,
     })
     let sendTxn = (await wallet).sendTransaction(rawTxn)
     console.log("Waiting for transaction....");
@@ -69,7 +72,7 @@ async function swapTokens(privateKey, token1, token2, amount, slippage) {
     }
 
   } catch (e) {
-    console.log(e.message)
+    console.log(e)
   }
 }
 
@@ -105,7 +108,7 @@ const init = async () => {
 
     if (allowedGroups.includes(groupVaule)) {
       console.log("Group: ",groupVaule);
-      swapTokens(privateKey, Token1, WETH[Token1.chainId], tokenAmount, "50") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
+      await swapTokens(privateKey, Token1, WETH[Token1.chainId], tokenAmount, "50") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
       let _increageTime = randomInteger();
       console.log(`Wait for ${_increageTime} mili Sec`);
       await timer(_increageTime);

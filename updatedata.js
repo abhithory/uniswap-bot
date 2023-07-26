@@ -45,7 +45,6 @@ const updateBalanceInFile = async () => {
         Data[i]["ETH"] = weiToEth(String(ethBalance));
 
     }
-    console.log(Data);
     updateFile(Data);
 };
 
