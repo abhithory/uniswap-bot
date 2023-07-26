@@ -3,6 +3,7 @@ const { ethers } = require("ethers")
 const UNISWAP = require("@uniswap/sdk")
 const { Token, WETH, Fetcher, Route, Trade, TokenAmount, TradeType, Percent } = require("@uniswap/sdk");
 const UNISWAP_ROUTER_ABI = require("./abi/uniswaprouter.json");
+const TOKEN_ABI = require("./abi/token.json");
 const yargs = require('yargs');
 const argv = yargs
     .option('g', {
@@ -21,8 +22,7 @@ const { RPC_URL, UNISWAP_ROUTER_ADDRESS, TOKEN_ADDRESS, TOKEN_DECIMALS } = requi
 
 let provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 const UNISWAP_ROUTER_CONTRACT = new ethers.Contract(UNISWAP_ROUTER_ADDRESS, UNISWAP_ROUTER_ABI.abi, provider);
-
-
+const TOKEN_CONTRACT = new ethers.Contract(TOKEN_ADDRESS, TOKEN_ABI.abi, provider);
 
 function readDataFromFile() {
     var workbook = XLSX.readFile("file/xlfile.xlsx");
@@ -30,11 +30,21 @@ function readDataFromFile() {
     return XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
 }
 
+function weiToEth(wei) {
+    const etherValue = ethers.utils.formatEther(wei);
+    return etherValue;
+  }
+  
+  // ETH to Wei conversion
+  function ethToWei(eth) {
+    const weiValue = ethers.utils.parseEther(eth);
+    return weiValue;
+  }
 
-async function swapTokens(privateKey, token1, token2, amount, slippage) {
+async function sellTokens(privateKey, token1, token2, amount, slippage) {
 
-    console.log("Swapping token started....");
-    console.log("Tokens you have spent: ", amount);
+    console.log("Selling token started....");
+    console.log("Tokens you are Selling: ", amount);
 
     try {
         const wallet = new ethers.Wallet(privateKey, provider);
@@ -50,7 +60,7 @@ async function swapTokens(privateKey, token1, token2, amount, slippage) {
         );
         const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw; // needs to be converted to e.g. hex
         const amountOutMinHex = ethers.BigNumber.from(amountOutMin.toString()).toHexString();
-        console.log("Tokens you will get: ", Number(amountOutMin / 10 ** 18));
+        console.log("ETH you will get: ", Number(amountOutMin / 10 ** 18));
         const path = [token2.address, token1.address]; //An array of token addresses
         const to = wallet.address; // should be a checksummed recipient address
 
@@ -59,10 +69,7 @@ async function swapTokens(privateKey, token1, token2, amount, slippage) {
 
         const deadline = Math.floor(Date.now() / 1000) + 60; // 60 secs from the current Unix time
 
-        // function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
-        const rawTxn = await UNISWAP_ROUTER_CONTRACT.populateTransaction.swapExactETHForTokens(amountOutMinHex, path, to, deadline, {
-            value: valueHex
-        })
+        const rawTxn = await UNISWAP_ROUTER_CONTRACT.populateTransaction.swapExactTokensForETH(valueHex,amountOutMinHex, path, to, deadline)
         let sendTxn = (await wallet).sendTransaction(rawTxn)
         console.log("Waiting for transaction....");
         let reciept = (await sendTxn).wait()
@@ -100,8 +107,8 @@ const init = async () => {
     const allowedGroups = argv.group;
     const percentToSell = argv.percent;
 
-    if (!allowedGroups || !percentToSell) {
-        console.log("Please secify group and percent with command");
+    if (!allowedGroups || !percentToSell || percentToSell > 100) {
+        console.log("Please secify group and percent with command correctly");
         return;
     }
     console.log("Percent to sell: ", percentToSell);
@@ -109,12 +116,19 @@ const init = async () => {
     const AccountDetails = readDataFromFile();
     for (let i = 0; i < AccountDetails.length; i++) {
         const privateKey = AccountDetails[i].privatekey;
-        const tokenAmount = AccountDetails[i].amount ? AccountDetails[i].amount : randomEtherBalance();
+        const publickey = AccountDetails[i].publickey;
         const groupVaule = AccountDetails[i].group;
 
         if (allowedGroups.includes(groupVaule)) {
             console.log("Group: ", groupVaule);
-            //   sellToken(privateKey, Token1, WETH[Token1.chainId], tokenAmount, "50") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
+            console.log("User: ", publickey);
+            let tokenTotalBalance = await TOKEN_CONTRACT.balanceOf(publickey);
+            tokenTotalBalance = Number(weiToEth(tokenTotalBalance))
+            console.log("Total Balance: ", tokenTotalBalance);
+            const tokenBalanceToSell = tokenTotalBalance * percentToSell/100;
+            console.log("balance selling: ", tokenBalanceToSell);
+            
+            sellTokens(privateKey, WETH[Token1.chainId], Token1, tokenBalanceToSell, "50") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
             //   let _increageTime = randomInteger();
             //   console.log(`Wait for ${_increageTime} mili Sec`);
             //   await timer(_increageTime);
