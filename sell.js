@@ -31,13 +31,13 @@ function readDataFromFile() {
 }
 
 function weiToEth(wei) {
-    const etherValue = ethers.utils.formatEther(wei);
+    const etherValue = ethers.utils.formatEther(String(wei));
     return etherValue;
   }
   
   // ETH to Wei conversion
   function ethToWei(eth) {
-    const weiValue = ethers.utils.parseEther(eth);
+    const weiValue = ethers.utils.parseEther(String(eth));
     return weiValue;
   }
 
@@ -60,15 +60,22 @@ async function sellTokens(privateKey, token1, token2, amount, slippage) {
         );
         const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw; // needs to be converted to e.g. hex
         const amountOutMinHex = ethers.BigNumber.from(amountOutMin.toString()).toHexString();
-        console.log("ETH you will get: ", Number(amountOutMin / 10 ** 18));
+        console.log("ETH you will get: ", Number(amountOutMinHex) / 10 ** 18);
+        // const path = [token2.address, token1.address]; //An array of token addresses
         const path = [token2.address, token1.address]; //An array of token addresses
         const to = wallet.address; // should be a checksummed recipient address
 
         const value = trade.inputAmount.raw;
         const valueHex = await ethers.BigNumber.from(value.toString()).toHexString();
-
         const deadline = Math.floor(Date.now() / 1000) + 60; // 60 secs from the current Unix time
 
+        const allowance = await TOKEN_CONTRACT.allowance(to, UNISWAP_ROUTER_ADDRESS);
+        if (Number(valueHex) > Number(allowance)) {
+            const rawAllowanceTxn = await TOKEN_CONTRACT.populateTransaction.approve(UNISWAP_ROUTER_ADDRESS, ethToWei(String(10**10)));
+            let allowanceTx = await wallet.sendTransaction(rawAllowanceTxn)
+            console.log("tokens approved");
+            await allowanceTx.wait()
+        }
         const rawTxn = await UNISWAP_ROUTER_CONTRACT.populateTransaction.swapExactTokensForETH(valueHex,amountOutMinHex, path, to, deadline)
         let sendTxn = (await wallet).sendTransaction(rawTxn)
         console.log("Waiting for transaction....");
@@ -103,7 +110,7 @@ function randomEtherBalance() {
 }
 
 const init = async () => {
-    const Token1 = new Token(UNISWAP.ChainId.GÖRLI, TOKEN_ADDRESS, TOKEN_DECIMALS);
+    const TokenToSell = new Token(UNISWAP.ChainId.GÖRLI, TOKEN_ADDRESS, TOKEN_DECIMALS);
     const allowedGroups = argv.group;
     const percentToSell = argv.percent;
 
@@ -125,10 +132,9 @@ const init = async () => {
             let tokenTotalBalance = await TOKEN_CONTRACT.balanceOf(publickey);
             tokenTotalBalance = Number(weiToEth(tokenTotalBalance))
             console.log("Total Balance: ", tokenTotalBalance);
-            const tokenBalanceToSell = tokenTotalBalance * percentToSell/100;
-            console.log("balance selling: ", tokenBalanceToSell);
-            
-            sellTokens(privateKey, WETH[Token1.chainId], Token1, tokenBalanceToSell, "50") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
+            const tokenBalanceToSell = tokenTotalBalance * percentToSell/100;      
+
+            sellTokens(privateKey, WETH[TokenToSell.chainId], TokenToSell, tokenBalanceToSell, "50") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
             //   let _increageTime = randomInteger();
             //   console.log(`Wait for ${_increageTime} mili Sec`);
             //   await timer(_increageTime);
