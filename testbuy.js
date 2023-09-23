@@ -33,7 +33,7 @@ async function swapTokens(privateKey, token1, token2, amount, slippage) {
         const to = wallet.address; // should be a checksummed recipient address
 
         const value = trade.inputAmount.raw;
-        const valueHex = await ethers.BigNumber.from(value.toString()).toHexString();
+        const valueHex = ethers.BigNumber.from(value.toString()).toHexString();
 
         const deadline = Math.floor(Date.now() / 1000) + 60; // 60 secs from the current Unix time
 
@@ -62,16 +62,16 @@ async function swapTokens(privateKey, token1, token2, amount, slippage) {
 
 const init = async () => {
     const chainId = UNISWAP.ChainId.GÖRLI;
-    const addressDai = "0x84cA8bc7997272c7CfB4D0Cd3D55cd942B3c9419"; //dia, 18
-    const tokenAddress1 = "0xBB5b10e0012BF8ced5641bd38A690A1085Ff6451"; //xxxxx
-    const tokenAddress2 = "0xa565f7d28fcb6d191f535357857f987e7b3ee76b"; //kkkto
+    const addressDai = "0xdc31ee1784292379fbb2964b3b9c4124d8f89c60"; //dia, 18, working
+    const tokenAddress1 = "0xBB5b10e0012BF8ced5641bd38A690A1085Ff6451"; //xxxxx,18, not working
+    const tokenAddress2 = "0xa565f7d28fcb6d191f535357857f987e7b3ee76b"; //kkkto,18,
 
-    const Token1 = new Token(chainId, addressDai, 18);
+    const Token1 = new Token(chainId, tokenAddress2, 18);
 
 
     const privateKey = process.env.PRIVATE_KEY_1
-    const tokenAmountFromBuy = "0.0001";
-    await swapTokens(privateKey, Token1, WETH[Token1.chainId], tokenAmount, "2")
+    const tokenAmountFromBuy = "0.00000000000000001";
+    await swapTokens(privateKey, Token1, WETH[Token1.chainId], tokenAmountFromBuy, "2")
     //first argument = token we want, second = token we have, third = the amount of token that we give (token1) in etheres, fourth = Sippage tolerance
 
 };
