@@ -71,9 +71,9 @@ async function sellTokens(privateKey, token1, token2, amount, slippage) {
 
         const allowance = await TOKEN_CONTRACT.allowance(to, UNISWAP_ROUTER_ADDRESS);
         if (Number(valueHex) > Number(allowance)) {
-            const rawAllowanceTxn = await TOKEN_CONTRACT.populateTransaction.approve(UNISWAP_ROUTER_ADDRESS, ethToWei(String(10**10)));
+            const rawAllowanceTxn = await TOKEN_CONTRACT.populateTransaction.approve(UNISWAP_ROUTER_ADDRESS, ethToWei(String(allowance) + 1 ));
             let allowanceTx = await wallet.sendTransaction(rawAllowanceTxn)
-            console.log("tokens approved");
+            console.log("tokens approving");
             await allowanceTx.wait()
         }
         const rawTxn = await UNISWAP_ROUTER_CONTRACT.populateTransaction.swapExactTokensForETH(valueHex,amountOutMinHex, path, to, deadline)
@@ -134,7 +134,7 @@ const init = async () => {
             console.log("Total Balance: ", tokenTotalBalance);
             const tokenBalanceToSell = tokenTotalBalance * percentToSell/100;      
 
-            await sellTokens(privateKey, WETH[TokenToSell.chainId], TokenToSell, tokenBalanceToSell, "100") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
+            await sellTokens(privateKey, WETH[TokenToSell.chainId], TokenToSell, tokenBalanceToSell, "1000") //first argument = token we want, second = token we have, third = the amount of token that we give (token1), fourth = Sippage tolerance
             //   let _increageTime = randomInteger();
             //   console.log(`Wait for ${_increageTime} mili Sec`);
             //   await timer(_increageTime);

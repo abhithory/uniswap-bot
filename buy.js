@@ -52,9 +52,10 @@ async function swapTokens(privateKey, token1, token2, amount, slippage) {
     const value = trade.inputAmount.raw;
     const valueHex = await ethers.BigNumber.from(value.toString()).toHexString();
 
-
     const deadline = Math.floor(Date.now() / 1000) + 60; // 60 secs from the current Unix time
-    const rawTxn = await UNISWAP_ROUTER_CONTRACT.populateTransaction.swapExactETHForTokens(amountOutMinHex, path, to, deadline, {
+
+    // swapExactETHForTokens
+      const rawTxn = await UNISWAP_ROUTER_CONTRACT.populateTransaction.swapExactETHForTokensSupportingFeeOnTransferTokens(amountOutMinHex, path, to, deadline, {
       value: valueHex,
       gasPrice: ethers.utils.parseUnits("50", 'gwei'),
       // gasLimit: 200000,
